@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oposiciones — Gobierno de Canarias</title>
+
+<!-- Cargar los datos de cada examen -->
+<script src="js/C111I24.js"></script>
+<script src="js/C1PI2023.js"></script>
+<script src="js/C211I24.js"></script>
+<script src="js/C211L24.js"></script>
+<script src="js/A231I24.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4ff;
+  --white:#ffffff;
+  --surface:#f8faff;
+  --c1:#6c63ff;--c1l:#ede9ff;--c1d:#4640b3;
+  --c2:#ff6b9d;--c2l:#ffe4ef;--c2d:#cc3d73;
+  --c3:#00c9a7;--c3l:#d0fff8;--c3d:#00856f;
+  --c4:#ffd166;--c4l:#fff8e1;--c4d:#b8930a;
+  --c5:#ff9f43;--c5l:#fff0e0;--c5d:#b8600e;
+  --ok:#00c9a7;--okl:#d0fff8;--okd:#00856f;
+  --err:#ff6b9d;--errl:#ffe4ef;--errd:#cc3d73;
+  --txt:#22223b;--txts:#6b6b8a;--txtm:#3d3d5c;
+  --rad:18px;--radsm:10px;--radpill:50px;
+  --shadow:0 6px 28px rgba(108,99,255,.13);
+  --shadow-sm:0 3px 12px rgba(0,0,0,.07);
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+
+/* BG decorations */
+body::before{content:'';position:fixed;top:-200px;left:-200px;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(108,99,255,.12),transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-200px;right:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,157,.1),transparent 70%);pointer-events:none;z-index:0}
+
+/* ===== SCREEN SYSTEM ===== */
+.screen{display:none;position:relative;z-index:1;animation:fadeUp .35s ease}
+.screen.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== SHARED COMPONENTS ===== */
+.pill{display:inline-flex;align-items:center;gap:.4rem;border-radius:var(--radpill);padding:.28rem .9rem;font-size:.78rem;font-weight:800;letter-spacing:.05em}
+.btn{border:none;border-radius:var(--radpill);font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
+.btn-primary{background:linear-gradient(135deg,var(--c1) 0%,#a855f7 100%);color:#fff;padding:.95rem 2.4rem;font-size:1.05rem;box-shadow:0 5px 22px rgba(108,99,255,.38)}
+.btn-primary:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 10px 35px rgba(108,99,255,.45)}
+.btn-primary:active{transform:scale(.97)}
+.btn-ghost{background:var(--white);border:2.5px solid var(--c1l);color:var(--c1);padding:.8rem 1.8rem;font-size:.95rem;box-shadow:var(--shadow-sm)}
+.btn-ghost:hover{background:var(--c1l);border-color:var(--c1)}
+
+/* ===== HOME SCREEN ===== */
+#home{flex-direction:column;align-items:center;min-height:100vh;padding:3rem 1.5rem 2rem;gap:2rem;text-align:center}
+
+.home-hero{display:flex;flex-direction:column;align-items:center;gap:1rem}
+.emoji-big{font-size:4.5rem;animation:float 3s ease-in-out infinite;display:block}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+.home-title{font-size:clamp(2.2rem,6vw,4rem);font-weight:900;line-height:1.08;letter-spacing:-.02em;background:linear-gradient(135deg,var(--c1) 0%,var(--c2) 50%,var(--c5) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.home-sub{font-size:1rem;color:var(--txts);font-weight:600;max-width:420px;line-height:1.6}
+
+/* Stats bar */
+.stats-bar{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center}
+.stat-chip{background:var(--white);border-radius:var(--radpill);padding:.55rem 1.3rem;font-weight:800;font-size:.9rem;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:.5rem;color:var(--txtm)}
+.stat-chip .num{font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Exam cards grid */
+.exam-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;max-width:820px;width:100%}
+.exam-card{background:var(--white);border-radius:var(--rad);padding:1.4rem;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .22s;border:2.5px solid transparent;text-align:left;position:relative;overflow:hidden}
+.exam-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(255,255,255,0));opacity:0;transition:opacity .22s}
+.exam-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--c-card)}
+.exam-card.selected{border-color:var(--c-card);background:color-mix(in srgb,var(--c-card) 8%,white)}
+.exam-card-emoji{font-size:2rem;display:block;margin-bottom:.6rem}
+.exam-card-title{font-size:.9rem;font-weight:800;color:var(--txt);margin-bottom:.3rem;line-height:1.3}
+.exam-card-meta{font-size:.72rem;font-weight:700;color:var(--txts)}
+.exam-card-count{position:absolute;top:.9rem;right:.9rem;font-size:.7rem;font-weight:900;border-radius:var(--radpill);padding:.2rem .6rem}
+.exam-card-check{position:absolute;bottom:.9rem;right:.9rem;font-size:1.2rem;opacity:0;transition:opacity .2s}
+.exam-card.selected .exam-card-check{opacity:1}
+
+/* Config panel */
+.config-panel{background:var(--white);border-radius:var(--rad);padding:1.6rem;max-width:480px;width:100%;box-shadow:var(--shadow-sm)}
+.config-label{font-size:.78rem;font-weight:900;color:var(--txts);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.8rem;display:block}
+.config-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:1rem}
+.config-row:last-child{margin-bottom:0}
+.config-row-label{font-weight:700;font-size:.92rem;color:var(--txtm)}
+.fancy-select{background:var(--surface);border:2px solid var(--c1l);border-radius:10px;padding:.42rem .9rem;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:700;color:var(--txt);cursor:pointer;outline:none;transition:border .15s}
+.fancy-select:focus{border-color:var(--c1)}
+
+.start-row{display:flex;flex-direction:column;align-items:center;gap:.6rem}
+.start-hint{font-size:.78rem;font-weight:700;color:var(--txts)}
+
+/* ===== QUIZ SCREEN ===== */
+#quiz{flex-direction:column;min-height:100vh}
+
+/* Header */
+.quiz-hdr{background:var(--white);padding:1rem 1.5rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 2px 14px rgba(0,0,0,.06);position:sticky;top:0;z-index:20}
+.q-num-lbl{font-weight:900;font-size:.88rem;color:var(--c1);white-space:nowrap;min-width:56px}
+.prog-wrap{flex:1;display:flex;flex-direction:column;gap:3px}
+.prog-track{height:9px;background:#eceeff;border-radius:var(--radpill);overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:var(--radpill);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.score-lbl{font-size:.7rem;font-weight:800;color:var(--c1);text-align:right}
+.score-pill-hdr{background:var(--c3l);border:2px solid var(--c3);border-radius:var(--radpill);padding:.28rem .8rem;font-weight:900;font-size:.82rem;color:var(--okd);white-space:nowrap}
+.btn-exit-hdr{background:none;border:2px solid #dde;border-radius:var(--radpill);padding:.28rem .75rem;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;color:var(--txts);transition:all .15s;white-space:nowrap}
+.btn-exit-hdr:hover{border-color:var(--err);color:var(--errd)}
+
+/* Body */
+.quiz-body{flex:1;padding:1.8rem 1.5rem 3rem;max-width:780px;margin:0 auto;width:100%}
+
+/* Question meta */
+.q-meta{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1.2rem}
+.badge-cuerpo{border-radius:var(--radpill);padding:.28rem .85rem;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.1em}
+.badge-c1{background:var(--c1l);color:var(--c1d)}
+.badge-c2{background:var(--c2l);color:var(--c2d)}
+.badge-a2{background:var(--c5l);color:var(--c5d)}
+.badge-conv{background:#f0f0fa;color:var(--txts);border-radius:var(--radpill);padding:.28rem .85rem;font-size:.7rem;font-weight:700}
+.badge-norma{background:#f9f0ff;color:#7c3aed;border-radius:var(--radpill);padding:.28rem .85rem;font-size:.68rem;font-weight:700;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Question card */
+.q-card{background:var(--white);border-radius:var(--rad);padding:1.8rem;box-shadow:var(--shadow-sm);margin-bottom:1.2rem}
+.q-number{font-size:.75rem;font-weight:900;color:var(--txts);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.6rem;display:block}
+.q-text{font-size:clamp(1rem,2.2vw,1.12rem);font-weight:700;line-height:1.65;color:var(--txt)}
+
+/* Options */
+.opts{display:flex;flex-direction:column;gap:.7rem}
+.opt{background:var(--white);border:2.5px solid #e2e6ff;border-radius:14px;padding:1rem 1.2rem;display:flex;align-items:flex-start;gap:.85rem;cursor:pointer;transition:all .18s;text-align:left;font-family:'Nunito',sans-serif;box-shadow:var(--shadow-sm)}
+.opt:hover:not(:disabled){border-color:var(--c1);transform:translateX(5px);box-shadow:0 4px 18px rgba(108,99,255,.18)}
+.opt-letter{width:30px;height:30px;min-width:30px;border-radius:8px;background:#eceeff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.82rem;color:var(--c1);transition:all .18s;flex-shrink:0}
+.opt:hover:not(:disabled) .opt-letter{background:var(--c1);color:#fff}
+.opt-text{font-size:.9rem;font-weight:600;color:var(--txtm);line-height:1.55;padding-top:3px}
+
+.opt.correct{border-color:var(--ok);background:var(--okl);cursor:default;transform:none!important}
+.opt.correct .opt-letter{background:var(--ok);color:#fff}
+.opt.correct .opt-text{color:var(--okd)}
+.opt.wrong{border-color:var(--err);background:var(--errl);cursor:default;transform:none!important}
+.opt.wrong .opt-letter{background:var(--err);color:#fff}
+.opt.wrong .opt-text{color:var(--errd);opacity:.85}
+.opt:disabled{cursor:default}
+
+/* Feedback */
+.feedback{border-radius:14px;padding:1rem 1.3rem;margin-top:.8rem;font-size:.9rem;font-weight:700;line-height:1.5;display:none;animation:pop .3s cubic-bezier(.4,0,.2,1)}
+.feedback.show{display:flex;align-items:flex-start;gap:.7rem}
+.feedback-icon{font-size:1.3rem;flex-shrink:0}
+.feedback.ok-fb{background:var(--okl);color:var(--okd);border:2px solid rgba(0,201,167,.35)}
+.feedback.ko-fb{background:var(--errl);color:var(--errd);border:2px solid rgba(255,107,157,.3)}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* Next btn */
+.btn-next{margin-top:1.2rem;background:linear-gradient(135deg,var(--c1),#a855f7);color:#fff;border:none;border-radius:var(--radpill);padding:.85rem 2rem;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;display:none;box-shadow:0 4px 20px rgba(108,99,255,.32);transition:all .2s}
+.btn-next.show{display:inline-flex;align-items:center;gap:.5rem}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,.42)}
+
+/* ===== RESULTS SCREEN ===== */
+#results{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2.5rem 1.5rem;gap:1.6rem;text-align:center}
+
+.trophy-wrap{position:relative;display:inline-block}
+.trophy-emoji{font-size:5.5rem;display:block;animation:tropheein .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes tropheein{from{transform:scale(0) rotate(-15deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+
+.ring-container{position:relative;width:170px;height:170px}
+.ring-container svg{transform:rotate(-90deg)}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-size:2.6rem;font-weight:900;line-height:1}
+.ring-sub{font-size:.7rem;font-weight:800;color:var(--txts);text-transform:uppercase;letter-spacing:.12em;margin-top:2px}
+
+.res-headline{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:900;background:linear-gradient(135deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.res-tagline{color:var(--txts);font-weight:600;font-size:.95rem}
+
+.breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;max-width:380px;width:100%}
+.bd-card{background:var(--white);border-radius:var(--rad);padding:1.1rem .7rem;box-shadow:var(--shadow-sm);text-align:center}
+.bd-num{font-size:2rem;font-weight:900;display:block}
+.bd-lbl{font-size:.68rem;font-weight:800;color:var(--txts);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+
+.btn-row{display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center}
+
+/* ===== CONFETTI ===== */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+.cfp{position:absolute;top:-10px;width:10px;height:10px;border-radius:2px;animation:cffall linear forwards}
+@keyframes cffall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- ======== HOME ======== -->
+<div id="home" class="screen active">
+  <div class="home-hero">
+    <span class="emoji-big">🏛️</span>
+    <h1 class="home-title">Oposiciones<br>Canarias</h1>
+    <p class="home-sub">Banco de preguntas oficiales de las pruebas selectivas de la Administración Pública de Canarias</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-chip"><span class="num" id="stat-total">—</span>preguntas</div>
+    <div class="stat-chip"><span class="num">5</span>exámenes</div>
+    <div class="stat-chip"><span class="num">3</span>cuerpos</div>
+  </div>
+
+  <!-- Exam selector -->
+  <div style="max-width:820px;width:100%;text-align:left">
+    <span class="config-label">📋 Selecciona examen(es) — puedes elegir varios</span>
+    <div class="exam-grid" id="exam-grid"></div>
+  </div>
+
+  <!-- Config -->
+  <div class="config-panel">
+    <span class="config-label">⚙ Configurar partida</span>
+    <div class="config-row">
+      <span class="config-row-label">Nº de preguntas</span>
+      <select class="fancy-select" id="num-q">
+        <option value="10">10 — rápido</option>
+        <option value="25" selected>25 — estándar</option>
+        <option value="50">50 — intensivo</option>
+        <option value="all">Todas 🔥</option>
+      </select>
+    </div>
+    <div class="config-row">
+      <span class="config-row-label">Orden</span>
+      <select class="fancy-select" id="order-q">
+        <option value="random">Aleatorio 🎲</option>
+        <option value="sequential">Secuencial</option>
+      </select>
+    </div>
+    <div class="config-row">
+      <span class="config-row-label">Incluir reservas</span>
+      <select class="fancy-select" id="include-reservas">
+        <option value="yes">Sí, incluirlas</option>
+        <option value="no">No, solo numeradas</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="start-row">
+    <button class="btn btn-primary" id="btn-start">¡Empezar! 🚀</button>
+    <span class="start-hint" id="start-hint">Selecciona al menos un examen</span>
+  </div>
+</div>
+
+<!-- ======== QUIZ ======== -->
+<div id="quiz" class="screen">
+  <div class="quiz-hdr">
+    <span class="q-num-lbl" id="q-num-lbl">1/25</span>
+    <div class="prog-wrap">
+      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="score-lbl" id="score-lbl">✓ 0 correctas</div>
+    </div>
+    <span class="score-pill-hdr" id="score-pill">✓ 0</span>
+    <button class="btn-exit-hdr" id="btn-exit">✕ Salir</button>
+  </div>
+  <div class="quiz-body">
+    <div class="q-meta">
+      <span class="badge-cuerpo" id="q-badge">C1</span>
+      <span class="badge-conv" id="q-conv">C111I24</span>
+      <span class="badge-norma" id="q-norma" title="">Art. —</span>
+    </div>
+    <div class="q-card">
+      <span class="q-number" id="q-number">Pregunta 1</span>
+      <div class="q-text" id="q-text">Cargando...</div>
+    </div>
+    <div class="opts" id="opts"></div>
+    <div class="feedback" id="feedback"><span class="feedback-icon" id="fb-icon">✓</span><span id="fb-text"></span></div>
+    <button class="btn-next" id="btn-next">Siguiente ➜</button>
+  </div>
+</div>
+
+<!-- ======== RESULTS ======== -->
+<div id="results" class="screen">
+  <div class="trophy-wrap">
+    <span class="trophy-emoji" id="trophy-emoji">🏆</span>
+  </div>
+  <div class="ring-container">
+    <svg width="170" height="170" viewBox="0 0 170 170">
+      <circle cx="85" cy="85" r="72" fill="none" stroke="#eceeff" stroke-width="11"/>
+      <circle cx="85" cy="85" r="72" fill="none" id="ring-arc"
+        stroke="#6c63ff" stroke-width="11" stroke-linecap="round"
+        stroke-dasharray="452.4" stroke-dashoffset="452.4"/>
+    </svg>
+    <div class="ring-inner">
+      <span class="ring-pct" id="ring-pct">0%</span>
+      <span class="ring-sub">acierto</span>
+    </div>
+  </div>
+  <div class="res-headline" id="res-headline">¡Bien hecho!</div>
+  <div class="res-tagline" id="res-tagline"></div>
+  <div class="breakdown">
+    <div class="bd-card"><span class="bd-num" id="r-ok" style="color:var(--ok)">0</span><span class="bd-lbl">✓ Correctas</span></div>
+    <div class="bd-card"><span class="bd-num" id="r-ko" style="color:var(--err)">0</span><span class="bd-lbl">✗ Errores</span></div>
+    <div class="bd-card"><span class="bd-num" id="r-tot" style="color:var(--c1)">0</span><span class="bd-lbl">Total</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" id="btn-retry">↻ Repetir</button>
+    <button class="btn btn-primary" id="btn-home">⌂ Inicio</button>
+  </div>
+</div>
+
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<script>
+/* ========================================================
+   DATOS: todos los exámenes disponibles
+======================================================== */
+const EXAMENES = [C111I24, C1PI2023, C211I24, C211L24, A231I24];
+
+/* Colores por cuerpo para las tarjetas */
+const CUERPO_COLORS = {
+  C1: {bg:'#ede9ff', border:'#6c63ff', text:'#4640b3'},
+  C2: {bg:'#ffe4ef', border:'#ff6b9d', text:'#cc3d73'},
+  A2: {bg:'#fff0e0', border:'#ff9f43', text:'#b8600e'}
+};
+
+/* ========================================================
+   STATE
+======================================================== */
+let state = {
+  selectedExams: new Set(),
+  numQ: 25,
+  order: 'random',
+  includeReservas: true,
+  pool: [],
+  questions: [],
+  current: 0,
+  score: 0,
+  answered: false
+};
+
+/* ========================================================
+   HOME — Build exam cards
+======================================================== */
+function buildExamGrid() {
+  const grid = document.getElementById('exam-grid');
+  grid.innerHTML = '';
+  let totalQ = 0;
+  EXAMENES.forEach(ex => {
+    totalQ += ex.preguntas.length;
+    const col = CUERPO_COLORS[ex.meta.cuerpo] || CUERPO_COLORS['C1'];
+    const card = document.createElement('div');
+    card.className = 'exam-card';
+    card.style.setProperty('--c-card', col.border);
+    card.dataset.id = ex.meta.id;
+    card.innerHTML = `
+      <span class="exam-card-emoji">${ex.meta.emoji}</span>
+      <div class="exam-card-count pill" style="background:${col.bg};color:${col.text}">${ex.preguntas.length}p</div>
+      <div class="exam-card-title">${ex.meta.titulo}</div>
+      <div class="exam-card-meta">${ex.meta.fecha} · ${ex.meta.acceso}</div>
+      <span class="exam-card-check">✅</span>
+    `;
+    card.addEventListener('click', () => toggleExam(ex.meta.id, card));
+    grid.appendChild(card);
+  });
+  document.getElementById('stat-total').textContent = totalQ;
+  updateStartHint();
+}
+
+function toggleExam(id, card) {
+  if (state.selectedExams.has(id)) {
+    state.selectedExams.delete(id);
+    card.classList.remove('selected');
+  } else {
+    state.selectedExams.add(id);
+    card.classList.add('selected');
+  }
+  updateStartHint();
+}
+
+function updateStartHint() {
+  const n = state.selectedExams.size;
+  const hint = document.getElementById('start-hint');
+  if (n === 0) {
+    hint.textContent = 'Selecciona al menos un examen';
+  } else {
+    const total = getPool().length;
+    hint.textContent = `${n} examen${n>1?'es':''} seleccionado${n>1?'s':''} · ${total} preguntas disponibles`;
+  }
+}
+
+function getPool() {
+  const includeRes = document.getElementById('include-reservas')?.value !== 'no';
+  let pool = [];
+  EXAMENES.forEach(ex => {
+    if (state.selectedExams.has(ex.meta.id)) {
+      ex.preguntas.forEach(p => {
+        if (!includeRes && p.pregunta.startsWith('[RESERVA]')) return;
+        pool.push({
+          ...p,
+          cuerpo: ex.meta.cuerpo,
+          convocatoria: ex.meta.id
+        });
+      });
+    }
+  });
+  return pool;
+}
+
+/* ========================================================
+   START QUIZ
+======================================================== */
+function startQuiz() {
+  if (state.selectedExams.size === 0) {
+    alert('Por favor, selecciona al menos un examen.');
+    return;
+  }
+  const includeRes = document.getElementById('include-reservas').value !== 'no';
+  state.includeReservas = includeRes;
+  state.numQ = document.getElementById('num-q').value;
+  state.order = document.getElementById('order-q').value;
+
+  let pool = getPool();
+
+  if (state.order === 'random') {
+    pool = pool.sort(() => Math.random() - 0.5);
+  }
+
+  const n = state.numQ === 'all' ? pool.length : Math.min(parseInt(state.numQ), pool.length);
+  state.questions = pool.slice(0, n);
+  state.current = 0;
+  state.score = 0;
+  state.answered = false;
+
+  showScreen('quiz');
+  renderQuestion();
+}
+
+/* ========================================================
+   RENDER QUESTION
+======================================================== */
+function renderQuestion() {
+  const q = state.questions[state.current];
+  const total = state.questions.length;
+  const idx = state.current;
+  state.answered = false;
+
+  // Header
+  const pct = Math.round((idx / total) * 100);
+  document.getElementById('q-num-lbl').textContent = `${idx + 1}/${total}`;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('score-pill').textContent = `✓ ${state.score}`;
+  document.getElementById('score-lbl').textContent = `✓ ${state.score} correctas`;
+
+  // Meta
+  const cuerpo = q.cuerpo || 'C1';
+  const badge = document.getElementById('q-badge');
+  badge.textContent = cuerpo;
+  badge.className = `badge-cuerpo badge-${cuerpo.toLowerCase()}`;
+  document.getElementById('q-conv').textContent = q.convocatoria || '';
+  const normaEl = document.getElementById('q-norma');
+  normaEl.textContent = q.norma || '';
+  normaEl.title = q.norma || '';
+
+  // Question
+  const preguntaTexto = q.pregunta.replace(/^\[RESERVA\]\s*/,'');
+  document.getElementById('q-number').textContent = `Pregunta ${q.id}${q.pregunta.startsWith('[RESERVA]') ? ' · Reserva' : ''}`;
+  document.getElementById('q-text').textContent = preguntaTexto;
+
+  // Options
+  const letters = ['a','b','c','d'];
+  const optsList = document.getElementById('opts');
+  optsList.innerHTML = '';
+
+  q.opciones.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span><span class="opt-text">${opt}</span>`;
+    btn.addEventListener('click', () => selectAnswer(i));
+    optsList.appendChild(btn);
+  });
+
+  // Reset feedback
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  document.getElementById('btn-next').className = 'btn-next';
+  document.getElementById('btn-next').textContent = idx + 1 < total ? 'Siguiente ➜' : 'Ver resultados ➜';
+}
+
+/* ========================================================
+   SELECT ANSWER
+======================================================== */
+function selectAnswer(chosen) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const q = state.questions[state.current];
+  const correct = q.correcta;
+  const btns = document.querySelectorAll('.opt');
+  const fb = document.getElementById('feedback');
+
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correct) btn.classList.add('correct');
+    else if (i === chosen && chosen !== correct) btn.classList.add('wrong');
+  });
+
+  if (chosen === correct) {
+    state.score++;
+    fb.className = 'feedback show ok-fb';
+    document.getElementById('fb-icon').textContent = '✅';
+    document.getElementById('fb-text').textContent = '¡Correcto! Muy bien.';
+  } else {
+    fb.className = 'feedback show ko-fb';
+    document.getElementById('fb-icon').textContent = '❌';
+    const letters = ['a','b','c','d'];
+    document.getElementById('fb-text').textContent = `Incorrecto. La respuesta correcta era la opción "${letters[correct]}".`;
+  }
+
+  document.getElementById('score-pill').textContent = `✓ ${state.score}`;
+  document.getElementById('score-lbl').textContent = `✓ ${state.score} correctas`;
+  document.getElementById('btn-next').className = 'btn-next show';
+}
+
+/* ========================================================
+   NEXT / RESULTS
+======================================================== */
+function nextQuestion() {
+  if (state.current + 1 >= state.questions.length) {
+    showResults();
+  } else {
+    state.current++;
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  const total = state.questions.length;
+  const pct = Math.round((state.score / total) * 100);
+  const wrong = total - state.score;
+
+  document.getElementById('r-ok').textContent = state.score;
+  document.getElementById('r-ko').textContent = wrong;
+  document.getElementById('r-tot').textContent = total;
+  document.getElementById('ring-pct').textContent = pct + '%';
+
+  const arc = document.getElementById('ring-arc');
+  const circ = 452.4;
+  const offset = circ - (pct / 100) * circ;
+
+  let color, headline, tagline, trophy;
+  if (pct >= 80) {
+    color = '#00c9a7'; headline = '¡Resultado brillante!'; tagline = 'Estás muy bien preparado/a para el examen.'; trophy = '🏆';
+    launchConfetti();
+  } else if (pct >= 60) {
+    color = '#ffd166'; headline = '¡Buen trabajo!'; tagline = 'Vas por buen camino. Sigue repasando.'; trophy = '🥈';
+  } else {
+    color = '#ff6b9d'; headline = 'Sigue practicando'; tagline = 'Repasa los temas y vuelve a intentarlo. ¡Tú puedes!'; trophy = '💪';
+  }
+
+  arc.style.stroke = color;
+  document.getElementById('ring-pct').style.color = color;
+  document.getElementById('trophy-emoji').textContent = trophy;
+  document.getElementById('res-headline').textContent = headline;
+  document.getElementById('res-tagline').textContent = tagline;
+
+  showScreen('results');
+  arc.style.strokeDashoffset = circ;
+  setTimeout(() => { arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)'; arc.style.strokeDashoffset = offset; }, 120);
+}
+
+/* ========================================================
+   CONFETTI
+======================================================== */
+function launchConfetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = '';
+  const colors = ['#6c63ff','#ff6b9d','#00c9a7','#ffd166','#ff9f43','#a855f7'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'cfp';
+    el.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      animation-duration:${1.5+Math.random()*2}s;
+      animation-delay:${Math.random()*0.8}s;
+      opacity:${0.7+Math.random()*0.3};
+    `;
+    wrap.appendChild(el);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 4000);
+}
+
+/* ========================================================
+   SCREEN HELPERS
+======================================================== */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goHome() {
+  showScreen('home');
+}
+
+/* ========================================================
+   EVENT LISTENERS
+======================================================== */
+document.getElementById('btn-start').addEventListener('click', startQuiz);
+document.getElementById('btn-next').addEventListener('click', nextQuestion);
+document.getElementById('btn-exit').addEventListener('click', goHome);
+document.getElementById('btn-retry').addEventListener('click', startQuiz);
+document.getElementById('btn-home').addEventListener('click', goHome);
+
+document.getElementById('include-reservas').addEventListener('change', updateStartHint);
+document.getElementById('num-q').addEventListener('change', updateStartHint);
+
+/* ========================================================
+   INIT
+======================================================== */
+buildExamGrid();
+</script>
+</body>
+</html>
